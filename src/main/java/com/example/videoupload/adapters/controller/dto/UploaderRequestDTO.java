@@ -4,7 +4,7 @@ import com.example.videoupload.domain.enums.VideoStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public class VideoRequestDTO {
+public class UploaderRequestDTO {
 
     @JsonProperty("id")
     @Schema(example = "123e4567-e89b-12d3-a456-426614174000")
@@ -14,28 +14,13 @@ public class VideoRequestDTO {
     @Schema(example = "https://www.youtube.com/watch?v=123456")
     private String url;
 
-    @JsonProperty("userName")
-    @Schema(example = "user123")
-    private String userName;
-
-    @JsonProperty("userMail")
+    @JsonProperty("username")
     @Schema(example = "user@email.com")
-    private String userMail;
+    private String username;
 
     @JsonProperty("status")
     @Schema(example = "EM_PROCESSAMENTO")
     private VideoStatus status;
-
-    public VideoRequestDTO(String id, String url, String userName, String userMail, VideoStatus status) {
-        this.id = id;
-        this.url = url;
-        this.userName = userName;
-        this.userMail = userMail;
-        this.status = status;
-    }
-
-    public VideoRequestDTO(){
-    }
 
     public String getId() {
         return id;
@@ -53,20 +38,12 @@ public class VideoRequestDTO {
         this.url = url;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getUserMail() {
-        return userMail;
-    }
-
-    public void setUserMail(String userMail) {
-        this.userMail = userMail;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public VideoStatus getStatus() {

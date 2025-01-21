@@ -1,94 +1,135 @@
 package com.example.videoupload.application.service;
 
+import com.example.videoupload.adapters.controller.dto.UploaderRequestDTO;
 import com.example.videoupload.application.ports.UploadVideoPort;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.videoupload.domain.enums.VideoStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SqsException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 public class UploadVideo implements UploadVideoPort {
 
-    private static final String QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/621111424252/update-status";
-
     private final S3AsyncClient s3AsyncClient;
-    private final SqsClient sqsClient;
+
+    private final RestTemplate restTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(UploadVideo.class);
 
 
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
 
-    public UploadVideo(S3AsyncClient s3AsyncClient, SqsClient sqsClient) {
+    @Value("${api.url}")
+    private String apiUrl;
+
+    public UploadVideo(S3AsyncClient s3AsyncClient, RestTemplate restTemplate) {
         this.s3AsyncClient = s3AsyncClient;
-        this.sqsClient = sqsClient;
+        this.restTemplate = restTemplate;
     }
 
 
     @Override
-    public String uploadVideo(MultipartFile file, String id, String email) throws IOException, InterruptedException, ExecutionException {
-        // Diretório é o id recebido
-        String fileName = id + "/" + file.getOriginalFilename();
+    public String uploadVideo(MultipartFile file, String email) throws IOException {
+        validateParameters(file, email);
 
-        // Usar UUID para garantir nome único no arquivo temporário
-        String tempFileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-        Path tempFile = Files.createTempFile(null, tempFileName);
+        String id = UUID.randomUUID().toString();
+        String fileName = buildFilePath(email, id, file);
+        Path tempFile = createTemporaryFile(file, id);
 
         try {
-            // Copiar o conteúdo do MultipartFile para o arquivo temporário
-            Files.copy(file.getInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Arquivo temporário criado: " + tempFile);
+            uploadToS3(file, tempFile, fileName, id, email);
 
-            // Criando um Map para armazenar os metadados
-            Map<String, String> metadata = new HashMap<>();
-            metadata.put("id", id); // Adiciona o id como metadado
-            metadata.put("email", email); // Adiciona o email como metadado
+            sendVideoStatus(id, email, fileName);
 
-            // Cria o PutObjectRequest com a chave do arquivo, tipo de conteúdo e metadados
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(fileName)
-                    .contentType(file.getContentType())
-                    .metadata(metadata) // Passando o Map de metadados
-                    .build();
-
-            // Usando AsyncRequestBody para criar o corpo assíncrono a partir do arquivo temporário
-            AsyncRequestBody asyncRequestBody = AsyncRequestBody.fromFile(tempFile);
-            System.out.println("Iniciando upload para S3...");
-
-            // Realiza o upload do arquivo
-            s3AsyncClient.putObject(putObjectRequest, asyncRequestBody).get();
-            System.out.println("Upload concluído com sucesso!");
-
-
-
-            return "https://" + bucketName + ".s3.amazonaws.com/" + fileName;
-        } catch (IOException e) {
-            System.err.println("Erro durante o envio do arquivo (IOException): " + e.getMessage());
-            e.printStackTrace();  // Exibe a pilha de chamadas
-            throw e;
+            return generateS3Url(fileName);
+        } catch (Exception e) {
+            log.error("Error during video upload: {}", e.getMessage(), e);
+            throw new RuntimeException("Error during video upload", e);
         } finally {
-            // Exclui o arquivo temporário após o upload
-            try {
-                Files.deleteIfExists(tempFile);
-                System.out.println("Arquivo temporário excluído: " + tempFile);
-            } catch (IOException e) {
-                System.err.println("Erro ao excluir arquivo temporário: " + e.getMessage());
-                e.printStackTrace();
-            }
+            deleteTemporaryFile(tempFile);
+        }
+    }
+
+    private void validateParameters(MultipartFile file, String email) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be null or empty.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email cannot be null or empty.");
+        }
+    }
+
+    private String buildFilePath(String email, String id, MultipartFile file) {
+        return String.format("videos/%s/%s/%s", email, id, file.getOriginalFilename());
+    }
+
+    private Path createTemporaryFile(MultipartFile file, String id) throws IOException {
+        return Files.createTempFile(id, file.getOriginalFilename());
+    }
+
+    private void uploadToS3(MultipartFile file, Path tempFile, String fileName, String id, String email) {
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("id", id);
+        metadata.put("email", email);
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(fileName)
+                .contentType(file.getContentType())
+                .metadata(metadata)
+                .build();
+
+        s3AsyncClient.putObject(putObjectRequest, AsyncRequestBody.fromFile(tempFile))
+                .whenComplete((response, exception) -> {
+                    if (exception != null) {
+                        log.error("Error during S3 upload: {}", exception.getMessage(), exception);
+                    } else {
+                        log.info("Upload successful: {}", response);
+                    }
+                })
+                .join();
+    }
+
+    private void sendVideoStatus(String id, String email, String fileName) {
+        UploaderRequestDTO request = new UploaderRequestDTO();
+        request.setId(id);
+        request.setUsername(email);
+        request.setUrl("https://bucketName.s3.amazonaws.com/" + fileName);
+        request.setStatus(VideoStatus.RECEBIDO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<UploaderRequestDTO> entity = new HttpEntity<>(request, headers);
+
+        restTemplate.exchange(apiUrl + "/videos", HttpMethod.POST, entity, Void.class);
+    }
+
+    private String generateS3Url(String fileName) {
+        return "https://" + bucketName + ".s3.amazonaws.com/" + fileName;
+    }
+
+    private void deleteTemporaryFile(Path tempFile) {
+        try {
+            Files.delete(tempFile);
+        } catch (IOException e) {
+            log.warn("Failed to delete temporary file: {}", e.getMessage());
         }
     }
 }
