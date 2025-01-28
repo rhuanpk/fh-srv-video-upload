@@ -2,6 +2,7 @@ package com.example.videoupload.adapters.controller;
 
 import com.example.videoupload.application.ports.JwtServicePort;
 import com.example.videoupload.application.ports.UploadVideoPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +33,7 @@ public class UploadVideoController {
             String fileUrl = uploadVideoPort.uploadVideo(file, email);
             return ResponseEntity.ok("Upload realizado com sucesso! URL: " + fileUrl);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Erro ao enviar o arquivo: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar o arquivo: " + e.getMessage());
         }
     }
 }

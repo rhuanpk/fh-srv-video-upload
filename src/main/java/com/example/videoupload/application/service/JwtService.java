@@ -6,18 +6,26 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
+@Service
 public class JwtService implements JwtServicePort {
 
     @Value("${auth.url}")
-    private String authUrl;
+    String authUrl;
+
+    private final RestTemplate restTemplate;
+
+    public JwtService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Override
     public String validateTokenAndGetEmail(String token) {
-        RestTemplate restTemplate = new RestTemplate();
+
         String url = authUrl + token;
 
         try {
@@ -40,5 +48,4 @@ public class JwtService implements JwtServicePort {
             throw new RuntimeException("Erro ao validar o token: " + e.getMessage(), e);
         }
     }
-
 }

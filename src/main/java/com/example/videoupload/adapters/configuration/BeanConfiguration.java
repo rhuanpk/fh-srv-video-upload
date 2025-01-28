@@ -22,11 +22,6 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public JwtService jwtService() {
-        return new JwtService();
-    }
-
-    @Bean
     ModelMapper modelMapper() {
         return new ModelMapper();
     }
