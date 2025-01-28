@@ -110,7 +110,7 @@ public class UploadVideo implements UploadVideoPort {
         UploaderRequestDTO request = new UploaderRequestDTO();
         request.setId(id);
         request.setUsername(email);
-        request.setUrl("https://bucketName.s3.amazonaws.com/" + fileName);
+        request.setUrl(generateS3Url(fileName));
         request.setStatus(VideoStatus.RECEBIDO);
 
         HttpHeaders headers = new HttpHeaders();
