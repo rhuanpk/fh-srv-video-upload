@@ -3,9 +3,9 @@ package com.example.videoupload.application.service;
 import com.example.videoupload.adapters.controller.dto.UploaderRequestDTO;
 import com.example.videoupload.application.ports.UploadVideoPort;
 import com.example.videoupload.domain.enums.VideoStatus;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,13 +30,6 @@ public class UploadVideo implements UploadVideoPort {
     private final RestTemplate restTemplate;
 
     private static final Logger log = LoggerFactory.getLogger(UploadVideo.class);
-
-
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
-
-    @Value("${api.url}")
-    private String apiUrl;
 
     public UploadVideo(S3AsyncClient s3AsyncClient, RestTemplate restTemplate) {
         this.s3AsyncClient = s3AsyncClient;
@@ -88,8 +81,10 @@ public class UploadVideo implements UploadVideoPort {
         metadata.put("id", id);
         metadata.put("email", email);
 
+
+
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(getBucketName())
                 .key(fileName)
                 .contentType(file.getContentType())
                 .metadata(metadata)
@@ -118,11 +113,19 @@ public class UploadVideo implements UploadVideoPort {
 
         HttpEntity<UploaderRequestDTO> entity = new HttpEntity<>(request, headers);
 
-        restTemplate.exchange(apiUrl + "/videos", HttpMethod.POST, entity, Void.class);
+        Dotenv dotenv = Dotenv.load();
+        String url = dotenv.get("URL_STATUS_TRACKER_SERVICE");
+
+        restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
     }
 
     private String generateS3Url(String fileName) {
-        return "https://" + bucketName + ".s3.amazonaws.com/" + fileName;
+        return "https://" + getBucketName() + ".s3.amazonaws.com/" + fileName;
+    }
+
+    private String getBucketName() {
+        Dotenv dotenv = Dotenv.load();
+        return dotenv.get("BUCKET_NAME");
     }
 
     private void deleteTemporaryFile(Path tempFile) {
