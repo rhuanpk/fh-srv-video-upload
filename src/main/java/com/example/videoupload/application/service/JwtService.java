@@ -1,6 +1,7 @@
 package com.example.videoupload.application.service;
 
 import com.example.videoupload.application.ports.JwtServicePort;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -13,9 +14,7 @@ import java.util.Map;
 
 @Service
 public class JwtService implements JwtServicePort {
-
-    @Value("${auth.url}")
-    String authUrl;
+    
 
     private final RestTemplate restTemplate;
 
@@ -26,7 +25,12 @@ public class JwtService implements JwtServicePort {
     @Override
     public String validateTokenAndGetEmail(String token) {
 
-        String url = authUrl + token;
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        Dotenv dotenv = Dotenv.load();
+        String url = dotenv.get("URL_AUTH_SERVICE") + token;
 
         try {
 

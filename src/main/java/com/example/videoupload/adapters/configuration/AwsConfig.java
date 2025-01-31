@@ -1,6 +1,7 @@
 package com.example.videoupload.adapters.configuration;
 
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,20 +13,19 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 @Configuration
 public class AwsConfig {
 
-    @Value("${aws.s3.access-key}")
-    private String accessKey;
+    private final Dotenv dotenv;
 
-    @Value("${aws.s3.secret-key}")
-    private String secretKey;
-
-    @Value("${aws.s3.session-token}")
-    private String sessionToken;
-
-    @Value("${aws.s3.region}")
-    private String region;
+    public AwsConfig() {
+        this.dotenv = Dotenv.load();
+    }
 
     @Bean
     public S3AsyncClient s3AsyncClient() {
+        String accessKey = dotenv.get("AWS_S3_ACCESS_KEY");
+        String secretKey = dotenv.get("AWS_S3_SECRET_KEY");
+        String sessionToken = dotenv.get("AWS_S3_SESSION_TOKEN");
+        String region = dotenv.get("AWS_S3_REGION");
+
         AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
                 accessKey,
                 secretKey,
