@@ -1,6 +1,7 @@
 package com.example.videoupload.adapters.configuration;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,20 +13,27 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 @Configuration
 public class AwsConfig {
 
-    @Value("${AWS_S3_ACCESS_KEY}")
+    private static final Logger logger = LoggerFactory.getLogger(AwsConfig.class);
+
+    @Value("${aws.s3.accessKey}")
     private String accessKey;
 
-    @Value("${AWS_S3_SECRET_KEY}")
+    @Value("${aws.s3.secretKey}")
     private String secretKey;
 
-    @Value("${AWS_S3_SESSION_TOKEN}")
+    @Value("${aws.s3.sessionToken}")
     private String sessionToken;
 
-    @Value("${AWS_S3_REGION}")
+    @Value("${aws.s3.region}")
     private String region;
 
     @Bean
     public S3AsyncClient s3AsyncClient() {
+        logger.info("AWS S3 Access Key: {}", accessKey);
+        logger.info("AWS S3 Secret Key: {}", secretKey);
+        logger.info("AWS S3 Session Token: {}", sessionToken);
+        logger.info("AWS S3 Region: {}", region);
+
         AwsSessionCredentials sessionCredentials = AwsSessionCredentials.create(
                 accessKey,
                 secretKey,

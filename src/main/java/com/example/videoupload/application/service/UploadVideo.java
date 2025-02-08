@@ -6,6 +6,7 @@ import com.example.videoupload.domain.enums.VideoStatus;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,13 +30,18 @@ public class UploadVideo implements UploadVideoPort {
 
     private final RestTemplate restTemplate;
 
+    @Value("${aws.s3.bucketName}")
+    private String bucketName;
+
+    @Value("${url.status.tracker.service}")
+    private String statusTrackerServiceUrl;
+
     private static final Logger log = LoggerFactory.getLogger(UploadVideo.class);
 
     public UploadVideo(S3AsyncClient s3AsyncClient, RestTemplate restTemplate) {
         this.s3AsyncClient = s3AsyncClient;
         this.restTemplate = restTemplate;
     }
-
 
     @Override
     public String uploadVideo(MultipartFile file, String email) throws IOException {
@@ -81,8 +87,6 @@ public class UploadVideo implements UploadVideoPort {
         metadata.put("id", id);
         metadata.put("email", email);
 
-
-
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(getBucketName())
                 .key(fileName)
@@ -113,8 +117,10 @@ public class UploadVideo implements UploadVideoPort {
 
         HttpEntity<UploaderRequestDTO> entity = new HttpEntity<>(request, headers);
 
-        Dotenv dotenv = Dotenv.load();
-        String url = dotenv.get("URL_STATUS_TRACKER_SERVICE");
+        // Dotenv dotenv = Dotenv.load();
+        // String url = dotenv.get("URL_STATUS_TRACKER_SERVICE");
+
+        String url = statusTrackerServiceUrl;
 
         restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
     }
@@ -124,8 +130,7 @@ public class UploadVideo implements UploadVideoPort {
     }
 
     private String getBucketName() {
-        Dotenv dotenv = Dotenv.load();
-        return dotenv.get("BUCKET_NAME");
+        return bucketName;
     }
 
     private void deleteTemporaryFile(Path tempFile) {

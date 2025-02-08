@@ -13,3 +13,5 @@ services:
          - AWS_S3_SESSION_TOKEN=${AWS_S3_SESSION_TOKEN}
          - AWS_S3_REGION=${AWS_S3_REGION}
          - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      env_file:
+         - .env
