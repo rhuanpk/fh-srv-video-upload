@@ -35,7 +35,6 @@ jobs:
             -Dsonar.organization=brunocamposousa \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -X
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
