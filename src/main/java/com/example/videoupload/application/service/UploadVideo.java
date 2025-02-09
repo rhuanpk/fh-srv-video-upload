@@ -111,7 +111,7 @@ public class UploadVideo implements UploadVideoPort {
                 .join();
     }
 
-    private void sendVideoStatus(String id, String email, String fileName) {
+    public void sendVideoStatus(String id, String email, String fileName) {
         UploaderRequestDTO request = new UploaderRequestDTO();
         request.setId(id);
         request.setUsername(email);
@@ -128,11 +128,11 @@ public class UploadVideo implements UploadVideoPort {
         restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
     }
 
-    private String generateS3Url(String fileName) {
+    public String generateS3Url(String fileName) {
         return "https://" + getBucketName() + ".s3.amazonaws.com/" + fileName;
     }
 
-    private String getBucketName() {
+    public String getBucketName() {
         return bucketName;
     }
 
