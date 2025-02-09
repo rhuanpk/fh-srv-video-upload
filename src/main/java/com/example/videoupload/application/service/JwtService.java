@@ -35,10 +35,12 @@ public class JwtService implements JwtServicePort {
             ResponseEntity<Map<String, String>> response =
                     restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
 
+            // Verificar se a resposta é OK e o corpo não é nulo
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, String> responseBody = response.getBody();
 
-                if (responseBody.containsKey("email")) {
+                // Verifique se responseBody não é nulo antes de acessar
+                if (responseBody != null && responseBody.containsKey("email")) {
                     return responseBody.get("email");
                 } else {
                     throw new IllegalArgumentException("Token inválido ou email não encontrado.");
