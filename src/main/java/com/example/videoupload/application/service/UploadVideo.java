@@ -3,7 +3,6 @@ package com.example.videoupload.application.service;
 import com.example.videoupload.adapters.controller.dto.UploaderRequestDTO;
 import com.example.videoupload.application.ports.UploadVideoPort;
 import com.example.videoupload.domain.enums.VideoStatus;
-import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +51,10 @@ public class UploadVideo implements UploadVideoPort {
         Path tempFile = createTemporaryFile(file, id);
 
         try {
+            log.info("Starting upload for file: {}", fileName);
+            log.info("Temporary file created at: {}", tempFile.toString());
+            log.info("File size: {} bytes", file.getSize());
+
             uploadToS3(file, tempFile, fileName, id, email);
 
             sendVideoStatus(id, email, fileName);
@@ -79,7 +82,10 @@ public class UploadVideo implements UploadVideoPort {
     }
 
     private Path createTemporaryFile(MultipartFile file, String id) throws IOException {
-        return Files.createTempFile(id, file.getOriginalFilename());
+        Path tempFile = Files.createTempFile(id, file.getOriginalFilename());
+        // Copiar o conteúdo do MultipartFile para o arquivo temporário
+        Files.write(tempFile, file.getBytes());
+        return tempFile;
     }
 
     private void uploadToS3(MultipartFile file, Path tempFile, String fileName, String id, String email) {
@@ -100,6 +106,7 @@ public class UploadVideo implements UploadVideoPort {
                         log.error("Error during S3 upload: {}", exception.getMessage(), exception);
                     } else {
                         log.info("Upload successful: {}", response);
+                        log.info("ETag: {}", response.eTag());
                     }
                 })
                 .join();
@@ -116,9 +123,6 @@ public class UploadVideo implements UploadVideoPort {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<UploaderRequestDTO> entity = new HttpEntity<>(request, headers);
-
-        // Dotenv dotenv = Dotenv.load();
-        // String url = dotenv.get("URL_STATUS_TRACKER_SERVICE");
 
         String url = statusTrackerServiceUrl;
 
