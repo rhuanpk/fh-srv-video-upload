@@ -31,7 +31,7 @@ jobs:
         run: |
           mvn verify sonar:sonar \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.projectKey=brunocamposousa_fh-srv-video-upload \
+            -Dsonar.projectKey=brunocamposousa_fh-srv-video-upload2 \
             -Dsonar.organization=brunocamposousa \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
