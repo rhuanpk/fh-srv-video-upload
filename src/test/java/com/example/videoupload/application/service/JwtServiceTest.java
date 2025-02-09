@@ -15,8 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +37,7 @@ class JwtServiceTest {
 
     @Test
     void testValidateTokenAndGetEmail_success() {
-        String token = "validToken123";
+        String token = "Bearer abc123xyzToken";
         String email = "user@example.com";
 
         Map<String, String> responseBody = Map.of("email", email);
@@ -62,5 +61,30 @@ class JwtServiceTest {
             isNull(),
             any(ParameterizedTypeReference.class)
         );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTokenIsInvalid() {
+        JwtService jwtService = new JwtService(restTemplate);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            jwtService.validateTokenAndGetEmail("InvalidToken");
+        });
+
+        assertEquals("Token inválido.", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTokenValidationFails() {
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), isNull(), any(ParameterizedTypeReference.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+        JwtService jwtService = new JwtService(restTemplate);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            jwtService.validateTokenAndGetEmail("Bearer abc123xyzToken");
+        });
+
+        assertEquals("Falha na validação do token.", exception.getMessage());
     }
 }

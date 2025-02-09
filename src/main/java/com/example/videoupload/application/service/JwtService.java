@@ -27,6 +27,8 @@ public class JwtService implements JwtServicePort {
     public String validateTokenAndGetEmail(String token) {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
+        } else {
+            throw new IllegalArgumentException("Token inválido.");
         }
 
         String url = authServiceUrl + token;
@@ -35,11 +37,9 @@ public class JwtService implements JwtServicePort {
             ResponseEntity<Map<String, String>> response =
                     restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
 
-            // Verificar se a resposta é OK e o corpo não é nulo
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, String> responseBody = response.getBody();
 
-                // Verifique se responseBody não é nulo antes de acessar
                 if (responseBody != null && responseBody.containsKey("email")) {
                     return responseBody.get("email");
                 } else {
@@ -49,7 +49,7 @@ public class JwtService implements JwtServicePort {
                 throw new IllegalArgumentException("Falha na validação do token.");
             }
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao validar o token: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Falha na validação do token.", e);
         }
     }
 }
