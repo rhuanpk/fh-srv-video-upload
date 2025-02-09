@@ -12,7 +12,7 @@ Este projeto utiliza o GitHub Actions para automação do pipeline de CI/CD. O w
 
 # SonarCloud
 
-A análise de qualidade do código é realizada utilizando SonarCloud. O relatório de análise está disponível publicamente. Você pode visualizar os detalhes de qualidade, cobertura de testes e outros insights no seguinte link: https://sonarcloud.io/project/overview?id=brunocamposousa_fh-srv-status-tracker
+A análise de qualidade do código é realizada utilizando SonarCloud. O relatório de análise está disponível publicamente. Você pode visualizar os detalhes de qualidade, cobertura de testes e outros insights no seguinte link: https://sonarcloud.io/project/overview?id=brunocamposousa_fh-srv-video-upload2
 
 # Documentação da API
 
