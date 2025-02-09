@@ -2,6 +2,7 @@ package com.example.videoupload.application.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -42,6 +43,10 @@ class UploadVideoTest {
 
     @Test
     void testUploadVideo_success() throws Exception {
+        when(mockFile.getSize()).thenReturn(1000L);
+        when(mockFile.getContentType()).thenReturn("video/mp4");
+        when(mockFile.getBytes()).thenReturn("video content".getBytes());
+
         uploadVideo.uploadVideo(mockFile, "user@example.com");
     }
 }

@@ -83,7 +83,6 @@ public class UploadVideo implements UploadVideoPort {
 
     private Path createTemporaryFile(MultipartFile file, String id) throws IOException {
         Path tempFile = Files.createTempFile(id, file.getOriginalFilename());
-        // Copiar o conteúdo do MultipartFile para o arquivo temporário
         Files.write(tempFile, file.getBytes());
         return tempFile;
     }
