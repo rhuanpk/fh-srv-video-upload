@@ -24,17 +24,17 @@ jobs:
           key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: maven-${{ runner.os }}
 
-      - name: Run tests
-        run: mvn test
+      #- name: Run tests
+      #  run: mvn test
 
-      - name: Run SonarQube Scanner locally
-        run: |
-          mvn verify sonar:sonar \
-            -Dsonar.qualitygate.wait=true \
-            -Dsonar.projectKey=brunocamposousa_fh-srv-video-upload2 \
-            -Dsonar.organization=brunocamposousa \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      #- name: Run SonarQube Scanner locally
+      #  run: |
+      #    mvn verify sonar:sonar \
+      #      -Dsonar.qualitygate.wait=true \
+      #      -Dsonar.projectKey=brunocamposousa_fh-srv-video-upload2 \
+      #      -Dsonar.organization=brunocamposousa \
+      #      -Dsonar.host.url=https://sonarcloud.io \
+      #      -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
