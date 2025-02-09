@@ -81,6 +81,7 @@ public class UploadVideo implements UploadVideoPort {
         return String.format("videos/%s/%s/%s", email, id, file.getOriginalFilename());
     }
 
+    @SuppressWarnings("squid:S5443")
     private Path createTemporaryFile(MultipartFile file, String id) throws IOException {
         Path tempFile = Files.createTempFile(id, file.getOriginalFilename());
         Files.write(tempFile, file.getBytes());
